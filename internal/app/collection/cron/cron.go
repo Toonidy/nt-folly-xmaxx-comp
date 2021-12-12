@@ -37,12 +37,28 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 	return func() {
 		now := time.Now()
 		now = time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0, 0, now.Location())
+		updateComp := false
+		updatedNextComp := false
+		updatedPrevComp := false
 		defer func() {
 			if r := recover(); r != nil {
 				log.Error("recovering from panic", zap.Any("panic", r))
 			}
-			updatePreviousComp(ctx, conn, now, "FAILED", nil)
-			startNextComp(ctx, conn, now)
+			if updateComp {
+				log.Info("updating comp on fail stat collection")
+				if !updatedPrevComp {
+					err := updatePreviousComp(context.Background(), conn, now, "FAILED", nil)
+					if err != nil {
+						log.Error("failed to update previous comp", zap.Error(err))
+					}
+				}
+				if !updatedNextComp {
+					err := startNextComp(context.Background(), conn, now)
+					if err != nil {
+						log.Error("failed to update previous comp", zap.Error(err))
+					}
+				}
+			}
 		}()
 
 		log.Info("sync teams started")
@@ -65,6 +81,8 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 			log.Info("comp has finished")
 			return
 		}
+
+		updateComp = true
 
 		// Get Previous Log
 		var (
@@ -205,7 +223,10 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 			tx, err := conn.Begin(ctx)
 			if err != nil {
 				log.Error("unable to start team member stats ", zap.Error(err))
-				updatePreviousComp(ctx, conn, now, "FAILED", &newLogID)
+				err = updatePreviousComp(ctx, conn, now, "FAILED", &newLogID)
+				if err == nil {
+					updatedPrevComp = true
+				}
 				return
 			}
 			defer tx.Rollback(ctx)
@@ -241,7 +262,10 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 			_, err = tx.Exec(ctx, q, newLogID)
 			if err != nil {
 				log.Error("unable to update team member details", zap.Error(err))
-				updatePreviousComp(ctx, conn, now, "FAILED", &newLogID)
+				err = updatePreviousComp(ctx, conn, now, "FAILED", &newLogID)
+				if err == nil {
+					updatedPrevComp = true
+				}
 				return
 			}
 
@@ -274,7 +298,10 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 			_, err = tx.Exec(ctx, q, newLogID)
 			if err != nil {
 				log.Error("unable to insert team member records", zap.Error(err))
-				updatePreviousComp(ctx, conn, now, "FAILED", &newLogID)
+				err = updatePreviousComp(ctx, conn, now, "FAILED", &newLogID)
+				if err == nil {
+					updatedPrevComp = true
+				}
 				return
 			}
 
@@ -293,7 +320,10 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 			_, err = tx.Exec(ctx, q, newLogID)
 			if err != nil {
 				log.Error("unable to update team member update status", zap.Error(err))
-				updatePreviousComp(ctx, conn, now, "FAILED", &newLogID)
+				err = updatePreviousComp(ctx, conn, now, "FAILED", &newLogID)
+				if err == nil {
+					updatedPrevComp = true
+				}
 				return
 			}
 
@@ -325,7 +355,10 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 			err = tx.Commit(ctx)
 			if err != nil {
 				log.Error("unable to finish team member stats ", zap.Error(err))
-				updatePreviousComp(ctx, conn, now, "FAILED", &newLogID)
+				err = updatePreviousComp(ctx, conn, now, "FAILED", &newLogID)
+				if err == nil {
+					updatedPrevComp = true
+				}
 				return
 			}
 
@@ -333,9 +366,13 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 			err = updatePreviousComp(ctx, conn, now, "FINISHED", &newLogID)
 			if err != nil {
 				log.Error("unable to update comp results", zap.Error(err))
-				updatePreviousComp(ctx, conn, now, "FAILED", &newLogID)
+				err = updatePreviousComp(ctx, conn, now, "FAILED", &newLogID)
+				if err == nil {
+					updatedPrevComp = true
+				}
 				return
 			}
+			updatedPrevComp = true
 		}
 
 		// Start next comp
@@ -344,6 +381,7 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 			log.Error("unable to update comp status", zap.Error(err))
 			return
 		}
+		updatedNextComp = true
 
 		log.Info("sync teams completed")
 	}
