@@ -51,7 +51,16 @@ db-migrate-repeat-1: db-migrate-down-1 db-migrate-up-1
 .PHONY: db-reset
 db-reset: db-migrate-drop db-migrate-up
 
+.PHONY: gql
+gql:
+	go get github.com/99designs/gqlgen
+	go run github.com/99designs/gqlgen generate
+
 .PHONY: collection
 collection:
 	go run cmd/collection/main.go service
+
+.PHONY: serve
+serve:
+	go run cmd/serve/main.go service
 

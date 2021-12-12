@@ -1,0 +1,26 @@
+scalar Time
+
+enum Status {
+	NEW
+	ACTIVE
+	DISQUALIFIED
+}
+
+enum MembershipType {
+	BASIC
+	GOLD
+}
+
+type User {
+	id: ID!
+	username: String!
+	displayName: String!
+	membershipType: MembershipType!
+	status: Status!
+	createdAt: Time!
+	updatedAt: Time!
+}
+
+type Query {
+	users: [User!]!
+}
