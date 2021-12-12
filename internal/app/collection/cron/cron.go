@@ -35,6 +35,7 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 
 	return func() {
 		now := time.Now()
+		now = time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0, 0, now.Location())
 		defer func() {
 			if r := recover(); r != nil {
 				log.Error("recovering from panic", zap.Any("panic", r))
@@ -44,12 +45,12 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 		log.Info("sync teams started")
 
 		var (
-			timeFrom         time.Time
-			timeTo           time.Time
-			activeCompsCount int
+			timeFrom            time.Time
+			timeTo              time.Time
+			remainingCompsCount int
 		)
-		q := `SELECT MIN(from_at), MAX(to_at), COUNT(CASE status WHEN 'STARTED' THEN id END) FROM competition_rewards`
-		err := conn.QueryRow(ctx, q).Scan(&timeFrom, &timeTo, &activeCompsCount)
+		q := `SELECT MIN(from_at), MAX(to_at), COUNT(CASE status WHEN 'DRAFTED' THEN id END) FROM competition_rewards`
+		err := conn.QueryRow(ctx, q).Scan(&timeFrom, &timeTo, &remainingCompsCount)
 		if err != nil {
 			log.Error("unable to query comp dates", zap.Error(err))
 			return
@@ -219,20 +220,7 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 				log.Error("unable to start team member stats ", zap.Error(err))
 				return
 			}
-			defer func() {
-				tx.Rollback(ctx)
-				q = `
-					UPDATE competition_rewards
-					SET result_id = $1,
-						status = 'FAILED',
-						updated_at = NOW()
-					WHERE status = 'STARTED'`
-				_, err = conn.Exec(ctx, q, newLogID)
-				if err != nil {
-					log.Error("unable to update comp results", zap.Error(err))
-					return
-				}
-			}()
+			defer tx.Rollback(ctx)
 
 			// Record or Update members
 			q = `
