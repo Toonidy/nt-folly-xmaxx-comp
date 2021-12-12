@@ -43,18 +43,38 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 
 		log.Info("sync teams started")
 
+		var (
+			timeFrom         time.Time
+			timeTo           time.Time
+			activeCompsCount int
+		)
+		q := `SELECT MIN(from_at), MAX(to_at), COUNT(CASE status WHEN 'STARTED' THEN id END) FROM competition_rewards`
+		err := conn.QueryRow(ctx, q).Scan(&timeFrom, &timeTo, &activeCompsCount)
+		if err != nil {
+			log.Error("unable to query comp dates", zap.Error(err))
+			return
+		}
+
+		if now.Before(timeFrom) {
+			log.Error("comp has not started")
+			return
+		} else if now.After(timeTo) {
+			log.Error("comp has finished")
+			return
+		}
+
 		// Get Previous Log
 		var (
 			prevRequestID pgtype.UUID
 			prevLogID     pgtype.UUID
 		)
-		q := `
+		q = `
 			SELECT id, api_team_log_id
 			FROM nt_api_team_log_requests
 			WHERE deleted_at IS NULL
 			ORDER BY created_at DESC
 			LIMIT 1`
-		err := conn.QueryRow(ctx, q).Scan(&prevRequestID, &prevLogID)
+		err = conn.QueryRow(ctx, q).Scan(&prevRequestID, &prevLogID)
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			log.Error("unable to query previous log", zap.Error(err))
 			return
@@ -199,7 +219,20 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 				log.Error("unable to start team member stats ", zap.Error(err))
 				return
 			}
-			defer tx.Rollback(ctx)
+			defer func() {
+				tx.Rollback(ctx)
+				q = `
+					UPDATE competition_rewards
+					SET result_id = $1,
+						status = 'FAILED',
+						updated_at = NOW()
+					WHERE status = 'STARTED'`
+				_, err = conn.Exec(ctx, q, newLogID)
+				if err != nil {
+					log.Error("unable to update comp results", zap.Error(err))
+					return
+				}
+			}()
 
 			// Record or Update members
 			q = `
@@ -321,24 +354,25 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 				log.Error("unable to update comp results", zap.Error(err))
 				return
 			}
-			q = `
-				UPDATE competition_rewards
-				SET status = 'STARTED'
-				WHERE status = 'DRAFT'
-					AND from_at <= $1
-					AND to_at > $1`
-			_, err = conn.Exec(ctx, q, now)
-			if err != nil {
-				log.Error("unable to update comp status", zap.Error(err))
-				return
-			}
-
 			// Commit Transaction
 			err = tx.Commit(ctx)
 			if err != nil {
 				log.Error("unable to finish team member stats ", zap.Error(err))
 				return
 			}
+		}
+
+		// Start next comp
+		q = `
+			UPDATE competition_rewards
+			SET status = 'STARTED'
+			WHERE status = 'DRAFT'
+				AND from_at <= $1
+				AND to_at > $1`
+		_, err = conn.Exec(ctx, q, now)
+		if err != nil {
+			log.Error("unable to update comp status", zap.Error(err))
+			return
 		}
 
 		log.Info("sync teams completed")
