@@ -36,6 +36,7 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 
 	return func() {
 		now := time.Now()
+		now = time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0, 0, now.Location())
 		defer func() {
 			if r := recover(); r != nil {
 				log.Error("recovering from panic", zap.Any("panic", r))
