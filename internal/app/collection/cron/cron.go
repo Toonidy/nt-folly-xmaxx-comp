@@ -26,13 +26,13 @@ func NewCronService(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, ap
 }
 
 // syncTeams is the scheduled task function that collect Nitro Type Team Logs.
-func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClient nitrotype.APIClient, teamTag string, teamID int) func() {
-	return func() {
-		log = log.With(
-			zap.String("job", "syncTeams"),
-			zap.String("team", teamTag),
-		)
+func syncTeams(ctx context.Context, conn *pgxpool.Pool, l *zap.Logger, apiClient nitrotype.APIClient, teamTag string, teamID int) func() {
+	log := l.With(
+		zap.String("job", "syncTeams"),
+		zap.String("team", teamTag),
+	)
 
+	return func() {
 		defer func() {
 			if r := recover(); r != nil {
 				log.Error("recovering from panic", zap.Any("panic", r))
@@ -64,7 +64,7 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 			log.Error("unable to pull team log", zap.Error(err))
 
 			// Record Fail Request
-			if prevLogID.Status == pgtype.Present {
+			if prevLogID.Status == pgtype.Present && prevRequestID.Status == pgtype.Present {
 				responseType := "ERROR"
 				description := "Unknown error"
 				if err != nil {
@@ -102,11 +102,17 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 		}
 
 		// Insert Team Log
+		tx, err := conn.Begin(ctx)
+		if err != nil {
+			log.Error("unable to start recording team data", zap.Error(err))
+			return
+		}
+
 		logID := ""
 		responseType := "NEW"
 		description := "New log download"
 		q = `SELECT id FROM nt_api_team_logs WHERE hash = $1`
-		err = conn.QueryRow(ctx, q, hash).Scan(&logID)
+		err = tx.QueryRow(ctx, q, hash).Scan(&logID)
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			log.Error("unable to find existing team log", zap.Error(err))
 			return
@@ -117,7 +123,7 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 				VALUES ($1, $2)
 				ON CONFLICT (hash) DO NOTHING
 				RETURNING id`
-			err = conn.QueryRow(ctx, q, hash, data).Scan(&logID)
+			err = tx.QueryRow(ctx, q, hash, data).Scan(&logID)
 			if err != nil {
 				log.Error("unable to insert team log", zap.Error(err))
 				return
@@ -133,17 +139,27 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 			prevLogID.AssignTo(&prevLogIDText)
 			if prevLogIDText == logID {
 				responseType = "CACHE"
-				description = ""
+				description = "Same log found"
 			}
+		}
+		if prevRequestID.Status != pgtype.Present {
+			prevRequestID.Set(nil)
 		}
 
 		// Insert Team Log Request
 		q = `
-			INSERT INTO nt_api_team_log_requests (api_team_log_id, prev_api_team_log_id, response_type, description)
+			INSERT INTO nt_api_team_log_requests (prev_id, api_team_log_id, response_type, description)
 			VALUES ($1, $2, $3, $4)`
-		_, err = conn.Exec(ctx, q, logID, prevLogID, responseType, description)
+		_, err = tx.Exec(ctx, q, prevRequestID, logID, responseType, description)
 		if err != nil {
 			log.Error("unable to insert team log request", zap.Error(err))
+			return
+		}
+
+		// Commit Transaction
+		err = tx.Commit(ctx)
+		if err != nil {
+			log.Error("unable to fininsh recording team data", zap.Error(err))
 			return
 		}
 

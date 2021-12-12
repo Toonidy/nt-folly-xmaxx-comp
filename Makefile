@@ -41,3 +41,8 @@ db-migrate-down-1:
 
 .PHONY: db-migrate-repeat-1
 db-migrate-repeat-1: db-migrate-down-1 db-migrate-up-1
+
+.PHONY: collection
+collection:
+	go run cmd/collection/main.go service
+
