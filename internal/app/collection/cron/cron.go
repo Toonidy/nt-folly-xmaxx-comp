@@ -57,10 +57,10 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 		}
 
 		if now.Before(timeFrom) {
-			log.Error("comp has not started")
+			log.Info("comp has not started")
 			return
 		} else if now.After(timeTo) {
-			log.Error("comp has finished")
+			log.Info("comp has finished")
 			return
 		}
 
