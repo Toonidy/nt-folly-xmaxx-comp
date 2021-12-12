@@ -71,8 +71,9 @@ var dbMigrateUpCmd = &cobra.Command{
 
 // dbMigrateDownCmd represents the migration command
 var dbMigrateDownCmd = &cobra.Command{
-	Use:  "migrate-down", // Setup NT API Client
-	Long: "Runs DB Migration Down command.",
+	Use:   "migrate-down", // Setup NT API Client
+	Short: "runs DB Migration Down command.",
+	Long:  "Runs DB Migration Down command.",
 	Run: func(cmd *cobra.Command, args []string) {
 		n := 0
 		if len(args) > 0 {
