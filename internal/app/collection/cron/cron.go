@@ -367,7 +367,7 @@ func updatePreviousComp(ctx context.Context, conn *pgxpool.Pool, timeAt time.Tim
 	prevAt := timeAt.Add(-10 * time.Minute)
 	q := `
 		UPDATE competition_rewards
-		SET status = $2, request_id = $3, updated_at = ()
+		SET status = $2, request_id = $3, updated_at = NOW()
 		WHERE status = 'STARTED'
 			AND from_at <= $1
 			AND to_at > $1`
