@@ -6,6 +6,7 @@ import (
 	"errors"
 	"nt-folly-xmaxx-comp/internal/pkg/utils"
 	"nt-folly-xmaxx-comp/pkg/nitrotype"
+	"time"
 
 	"github.com/go-logr/zapr"
 	"github.com/jackc/pgtype"
@@ -22,7 +23,6 @@ func NewCronService(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, ap
 		cron.WithChain(cron.DelayIfStillRunning(logger)),
 	)
 	c.AddFunc("1,11,21,31,41,51 * * * *", syncTeams(ctx, conn, log, apiClient, teamTag, teamID))
-	// c.AddFunc("* * * * *", syncTeams(ctx, conn, log, apiClient, teamTag, teamID))
 	return c
 }
 
@@ -34,6 +34,7 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 	)
 
 	return func() {
+		now := time.Now()
 		defer func() {
 			if r := recover(); r != nil {
 				log.Error("recovering from panic", zap.Any("panic", r))
@@ -73,12 +74,36 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 				} else if !teamData.Success || teamData.Data.Info == nil {
 					description = "Team API Request Failed"
 				}
+				var newLogID pgtype.UUID
 				q = `
 					INSERT INTO nt_api_team_log_requests (prev_id, api_team_log_id, response_type, description)
-					VALUES ($1, $2, $3, $4)`
-				_, err = conn.Exec(ctx, q, prevRequestID, prevLogID, responseType, description)
+					VALUES ($1, $2, $3, $4)
+					RETURNING id`
+				err = conn.QueryRow(ctx, q, prevRequestID, prevLogID, responseType, description).Scan(&newLogID)
 				if err != nil {
 					log.Error("unable to insert request log (error)", zap.Error(err))
+				}
+				q = `
+					UPDATE competition_rewards
+					SET result_id = $1,
+						status = 'FAILED',
+						updated_at = NOW()
+					WHERE status = 'STARTED'`
+				_, err = conn.Exec(ctx, q, newLogID)
+				if err != nil {
+					log.Error("unable to update comp results", zap.Error(err))
+					return
+				}
+				q = `
+					UPDATE competition_rewards
+					SET status = 'STARTED'
+					WHERE status = 'DRAFT'
+						AND from_at <= $1
+						AND to_at > $1`
+				_, err = conn.Exec(ctx, q, now)
+				if err != nil {
+					log.Error("unable to update comp status", zap.Error(err))
+					return
 				}
 			}
 			return
@@ -283,6 +308,30 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 				) l
 				WHERE u.status != 'DISQUALIFIED'
 					AND u.reference_id = l.reference_id`
+
+			// Update comp results
+			q := `
+				UPDATE competition_rewards
+				SET result_id = $1,
+					status = 'FINISHED',
+					updated_at = NOW()
+				WHERE status = 'STARTED'`
+			_, err = tx.Exec(ctx, q, newLogID)
+			if err != nil {
+				log.Error("unable to update comp results", zap.Error(err))
+				return
+			}
+			q = `
+				UPDATE competition_rewards
+				SET status = 'STARTED'
+				WHERE status = 'DRAFT'
+					AND from_at <= $1
+					AND to_at > $1`
+			_, err = conn.Exec(ctx, q, now)
+			if err != nil {
+				log.Error("unable to update comp status", zap.Error(err))
+				return
+			}
 
 			// Commit Transaction
 			err = tx.Commit(ctx)

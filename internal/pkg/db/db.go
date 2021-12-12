@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/spf13/viper"
@@ -14,7 +15,7 @@ func GetConnectionString() string {
 	if connString == "" {
 		connString = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
 			viper.GetString("db_user"),
-			viper.GetString("db_pass"),
+			url.QueryEscape(viper.GetString("db_pass")),
 			viper.GetString("db_host"),
 			viper.GetString("db_port"),
 			viper.GetString("db_name"),

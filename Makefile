@@ -12,6 +12,7 @@ build:
 	@mkdir -p dist
 	go build -o dist/migrate cmd/migrate/main.go
 	go build -o dist/collection cmd/collection/main.go
+	go build -o dist/serve cmd/serve/main.go
 
 .PHONY: db-start
 db-start:

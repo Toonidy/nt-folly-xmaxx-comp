@@ -62,3 +62,19 @@ CREATE TABLE user_records (
 
 	UNIQUE (request_id, user_id)
 );
+
+CREATE TABLE competition_rewards (
+	id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
+	result_id UUID REFERENCES nt_api_team_log_requests (id),
+	status TEXT NOT NULL CHECK (status IN ('DRAFT', 'STARTED', 'FINISHED', 'FAILED')) DEFAULT 'DRAFT',
+	multiplier INT NOT NULL CHECK (multiplier IN (1, 2, 4, 8)) DEFAULT 1,
+	point_rewards INT[5] NOT NULL,
+	speed_rewards INT[5] NOT NULL,
+	accuracy_rewards INT[5] NOT NULL,
+	from_at TIMESTAMPTZ NOT NULL,
+	to_at TIMESTAMPTZ NOT NULL,
+
+	deleted_at TIMESTAMPTZ,
+	updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
