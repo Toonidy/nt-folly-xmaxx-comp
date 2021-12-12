@@ -53,7 +53,7 @@ func SetupCompetition(ctx context.Context, conn *pgxpool.Pool, timeFrom time.Tim
 		batch.Queue(q, multiplier, DefaultRewards, DefaultRewards, DefaultRewards, fromAt, toAt)
 
 		timeFrom = toAt
-		if timeFrom.After(timeTo) {
+		if timeFrom.Equal(timeTo) || timeFrom.After(timeTo) {
 			break
 		}
 	}
