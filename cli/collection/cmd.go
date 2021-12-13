@@ -34,6 +34,7 @@ var serviceCmd = &cobra.Command{
 		conn, err := db.ConnectPool(ctx, db.GetConnectionString())
 		if err != nil {
 			logger.Error("unable to connect to database", zap.Error(err))
+			return
 		}
 		apiClient := clients.NewAPIClientBrowser(viper.GetString("browser_user_agent"))
 
