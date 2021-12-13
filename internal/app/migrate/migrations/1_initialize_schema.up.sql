@@ -83,12 +83,16 @@ CREATE TABLE competitions (
 CREATE MATERIALIZED VIEW competition_results AS
 SELECT r.competition_id,
 	r.user_id,
+	r.grind,
 	rank() over g grind_rank,
 	coalesce(r.grind_rewards[rank() over g] * r.multiplier, 0) as grind_reward,
-	rank() over a as accuray_rank,
+	r.accuracy,
+	rank() over a as accuracy_rank,
 	coalesce(r.accuracy_rewards[rank() over a] * r.multiplier, 0) as accuracy_reward,
+	r.speed,
 	rank() over s as speed_rank,
 	coalesce(r.speed_rewards[rank() over s] * r.multiplier, 0) as speed_reward,
+	r.point,
 	rank() over p as point_rank,
 	coalesce(r.point_rewards[rank() over p] * r.multiplier, 0) as point_reward
 FROM (
@@ -115,3 +119,5 @@ WINDOW g as (PARTITION BY r.competition_id ORDER BY r.grind DESC),
 	a AS (PARTITION BY r.competition_id ORDER BY r.accuracy DESC, r.grind DESC),
 	s AS (PARTITION BY r.competition_id ORDER BY r.speed DESC, r.grind DESC),
 	p AS (PARTITION BY r.competition_id ORDER BY r.point DESC, r.grind DESC);
+
+CREATE UNIQUE INDEX ON competition_results (competition_id, user_id);
