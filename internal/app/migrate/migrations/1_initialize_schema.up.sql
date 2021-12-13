@@ -68,6 +68,7 @@ CREATE TABLE competition_rewards (
 	result_id UUID REFERENCES nt_api_team_log_requests (id),
 	status TEXT NOT NULL CHECK (status IN ('DRAFT', 'STARTED', 'FINISHED', 'FAILED')) DEFAULT 'DRAFT',
 	multiplier INT NOT NULL CHECK (multiplier IN (1, 2, 4, 8)) DEFAULT 1,
+	grind_rewards INT[5] NOT NULL,
 	point_rewards INT[5] NOT NULL,
 	speed_rewards INT[5] NOT NULL,
 	accuracy_rewards INT[5] NOT NULL,

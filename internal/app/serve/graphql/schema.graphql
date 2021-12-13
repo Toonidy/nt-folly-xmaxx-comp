@@ -16,6 +16,7 @@ type User {
 	username: String!
 	displayName: String!
 	membershipType: MembershipType!
+	totalPoints: Int!
 	status: Status!
 	createdAt: Time!
 	updatedAt: Time!

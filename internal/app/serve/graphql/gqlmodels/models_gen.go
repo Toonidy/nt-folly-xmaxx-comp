@@ -14,6 +14,7 @@ type User struct {
 	Username       string         `json:"username"`
 	DisplayName    string         `json:"displayName"`
 	MembershipType MembershipType `json:"membershipType"`
+	TotalPoints    int            `json:"totalPoints"`
 	Status         Status         `json:"status"`
 	CreatedAt      time.Time      `json:"createdAt"`
 	UpdatedAt      time.Time      `json:"updatedAt"`
