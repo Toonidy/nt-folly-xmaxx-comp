@@ -381,6 +381,7 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 			log.Error("unable to update comp status", zap.Error(err))
 			return
 		}
+		updateComp = false
 		updatedNextComp = true
 
 		log.Info("sync teams completed")
@@ -405,7 +406,7 @@ func updatePreviousComp(ctx context.Context, conn *pgxpool.Pool, timeAt time.Tim
 	prevAt := timeAt.Add(-10 * time.Minute)
 	q := `
 		UPDATE competition_rewards
-		SET status = $2, request_id = $3, updated_at = NOW()
+		SET status = $2, result_id = $3, updated_at = NOW()
 		WHERE status = 'STARTED'
 			AND from_at <= $1
 			AND to_at > $1`
