@@ -63,9 +63,9 @@ CREATE TABLE user_records (
 	UNIQUE (request_id, user_id)
 );
 
-CREATE TABLE competition_rewards (
+CREATE TABLE competitions (
 	id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
-	result_id UUID REFERENCES nt_api_team_log_requests (id),
+	request_id UUID REFERENCES nt_api_team_log_requests (id),
 	status TEXT NOT NULL CHECK (status IN ('DRAFT', 'STARTED', 'FINISHED', 'FAILED')) DEFAULT 'DRAFT',
 	multiplier INT NOT NULL CHECK (multiplier IN (1, 2, 4, 8)) DEFAULT 1,
 	grind_rewards INT[5] NOT NULL,
@@ -79,3 +79,39 @@ CREATE TABLE competition_rewards (
 	updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE MATERIALIZED VIEW competition_results AS
+SELECT r.competition_id,
+	r.user_id,
+	rank() over g grind_rank,
+	coalesce(r.grind_rewards[rank() over g] * r.multiplier, 0) as grind_reward,
+	rank() over a as accuray_rank,
+	coalesce(r.accuracy_rewards[rank() over a] * r.multiplier, 0) as accuracy_reward,
+	rank() over s as speed_rank,
+	coalesce(r.speed_rewards[rank() over s] * r.multiplier, 0) as speed_reward,
+	rank() over p as point_rank,
+	coalesce(r.point_rewards[rank() over p] * r.multiplier, 0) as point_reward
+FROM (
+	SELECT ur.user_id,
+		c.id AS competition_id,
+		c.multiplier,
+		c.grind_rewards,
+		c.accuracy_rewards,
+		c.speed_rewards,
+		c.point_rewards,
+		ur.played AS grind,
+		((1.0 - (ur.errs / ur.typed::decimal)) * 100.0) AS accuracy,
+		(ur.typed / 5.0 / (ur.secs / 60.0)) AS speed,
+		ROUND(ur.played
+			* (
+				(100.0 + ((ur.typed / 5.0 / (ur.secs / 60.0)) / 2.0))
+					* (1.0 - (ur.errs / ur.typed::decimal))
+			)
+		) AS point
+	FROM competitions c 
+		INNER JOIN user_records ur ON ur.request_id = c.request_id 
+) r
+WINDOW g as (PARTITION BY r.competition_id ORDER BY r.grind DESC),
+	a AS (PARTITION BY r.competition_id ORDER BY r.accuracy DESC, r.grind DESC),
+	s AS (PARTITION BY r.competition_id ORDER BY r.speed DESC, r.grind DESC),
+	p AS (PARTITION BY r.competition_id ORDER BY r.point DESC, r.grind DESC);

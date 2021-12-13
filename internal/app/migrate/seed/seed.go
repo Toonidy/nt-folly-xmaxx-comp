@@ -19,7 +19,7 @@ var (
 // SetupCompetition seeds in the competition data.
 func SetupCompetition(ctx context.Context, conn *pgxpool.Pool, timeFrom time.Time, timeTo time.Time) error {
 	count := 0
-	q := `SELECT COUNT(*) FROM competition_rewards`
+	q := `SELECT COUNT(*) FROM competitions`
 	err := conn.QueryRow(ctx, q).Scan(&count)
 	if err != nil {
 		return fmt.Errorf("failed to check if already seeded: %w", err)
@@ -48,9 +48,9 @@ func SetupCompetition(ctx context.Context, conn *pgxpool.Pool, timeFrom time.Tim
 		}
 
 		q := `
-			INSERT INTO competition_rewards (multiplier, point_rewards, speed_rewards, accuracy_rewards, from_at, to_at)
-			VALUES ($1, $2, $3, $4, $5, $6)`
-		batch.Queue(q, multiplier, DefaultRewards, DefaultRewards, DefaultRewards, fromAt, toAt)
+			INSERT INTO competitions (multiplier, grind_rewards, point_rewards, speed_rewards, accuracy_rewards, from_at, to_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)`
+		batch.Queue(q, multiplier, DefaultRewards, DefaultRewards, DefaultRewards, DefaultRewards, fromAt, toAt)
 
 		timeFrom = toAt
 		if timeFrom.Equal(timeTo) || timeFrom.After(timeTo) {

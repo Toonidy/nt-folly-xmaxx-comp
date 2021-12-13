@@ -67,7 +67,7 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 			timeFrom time.Time
 			timeTo   time.Time
 		)
-		q := `SELECT MIN(from_at), MAX(to_at) FROM competition_rewards`
+		q := `SELECT MIN(from_at), MAX(to_at) FROM competitions`
 		err := conn.QueryRow(ctx, q).Scan(&timeFrom, &timeTo)
 		if err != nil {
 			log.Error("unable to query comp dates", zap.Error(err))
@@ -384,13 +384,21 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 		updateComp = false
 		updatedNextComp = true
 
+		// Refresh result table
+		q = `REFRESH MATERIALIZED VIEW competition_results`
+		_, err = conn.Exec(ctx, q)
+		if err != nil {
+			log.Error("unable to update comp status", zap.Error(err))
+			return
+		}
+
 		log.Info("sync teams completed")
 	}
 }
 
 func startNextComp(ctx context.Context, conn *pgxpool.Pool, timeAt time.Time) error {
 	q := `
-		UPDATE competition_rewards
+		UPDATE competitions
 		SET status = 'STARTED', updated_at = NOW()
 		WHERE status = 'DRAFT'
 			AND from_at <= $1
@@ -405,8 +413,8 @@ func startNextComp(ctx context.Context, conn *pgxpool.Pool, timeAt time.Time) er
 func updatePreviousComp(ctx context.Context, conn *pgxpool.Pool, timeAt time.Time, status string, requestID *string) error {
 	prevAt := timeAt.Add(-10 * time.Minute)
 	q := `
-		UPDATE competition_rewards
-		SET status = $2, result_id = $3, updated_at = NOW()
+		UPDATE competitions
+		SET status = $2, request_id = $3, updated_at = NOW()
 		WHERE status = 'STARTED'
 			AND from_at <= $1
 			AND to_at > $1`
