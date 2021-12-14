@@ -1,7 +1,7 @@
 package main
 
-import "nt-folly-xmaxx-comp/cli/migrate"
+import "nt-folly-xmaxx-comp/cmd/migrate/cli"
 
 func main() {
-	migrate.Execute()
+	cli.Execute()
 }

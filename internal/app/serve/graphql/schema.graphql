@@ -52,6 +52,6 @@ type CompetitionPrize {
 }
 
 type Query {
-	users: [User!]!
+	users(timeRange: TimeRangeInput): [User!]!
 	competitions(timeRange: TimeRangeInput): [Competition!]!
 }

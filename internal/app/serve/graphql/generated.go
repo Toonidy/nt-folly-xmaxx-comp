@@ -62,7 +62,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Competitions func(childComplexity int, timeRange *gqlmodels.TimeRangeInput) int
-		Users        func(childComplexity int) int
+		Users        func(childComplexity int, timeRange *gqlmodels.TimeRangeInput) int
 	}
 
 	User struct {
@@ -78,7 +78,7 @@ type ComplexityRoot struct {
 }
 
 type QueryResolver interface {
-	Users(ctx context.Context) ([]*gqlmodels.User, error)
+	Users(ctx context.Context, timeRange *gqlmodels.TimeRangeInput) ([]*gqlmodels.User, error)
 	Competitions(ctx context.Context, timeRange *gqlmodels.TimeRangeInput) ([]*gqlmodels.Competition, error)
 }
 
@@ -191,7 +191,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Users(childComplexity), true
+		args, err := ec.field_Query_users_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Users(childComplexity, args["timeRange"].(*gqlmodels.TimeRangeInput)), true
 
 	case "User.createdAt":
 		if e.complexity.User.CreatedAt == nil {
@@ -353,7 +358,7 @@ type CompetitionPrize {
 }
 
 type Query {
-	users: [User!]!
+	users(timeRange: TimeRangeInput): [User!]!
 	competitions(timeRange: TimeRangeInput): [Competition!]!
 }
 `, BuiltIn: false},
@@ -380,6 +385,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 }
 
 func (ec *executionContext) field_Query_competitions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *gqlmodels.TimeRangeInput
+	if tmp, ok := rawArgs["timeRange"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timeRange"))
+		arg0, err = ec.unmarshalOTimeRangeInput2ᚖntᚑfollyᚑxmaxxᚑcompᚋinternalᚋappᚋserveᚋgraphqlᚋgqlmodelsᚐTimeRangeInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["timeRange"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_users_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *gqlmodels.TimeRangeInput
@@ -833,9 +853,16 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_users_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Users(rctx)
+		return ec.resolvers.Query().Users(rctx, args["timeRange"].(*gqlmodels.TimeRangeInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

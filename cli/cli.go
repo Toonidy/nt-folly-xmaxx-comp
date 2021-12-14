@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func InitConfig(cfgFile *string, logger *zap.Logger) *zap.Logger {
@@ -35,4 +36,22 @@ func InitConfig(cfgFile *string, logger *zap.Logger) *zap.Logger {
 		}
 	})
 	return logger.With(zap.String("version", build.Version), zap.String("build", build.BuildHash))
+}
+
+func CreateLogger() (*zap.Logger, error) {
+	var (
+		logConfig zap.Config
+		err       error
+	)
+	if viper.GetBool("prod") {
+		logConfig = zap.NewProductionConfig()
+	} else {
+		logConfig = zap.NewDevelopmentConfig()
+		logConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	}
+	logger, err := logConfig.Build()
+	if err != nil {
+		log.Fatalln("failed to setup logger", err)
+	}
+	return logger, nil
 }

@@ -1,6 +1,7 @@
 package build
 
 var (
-	Version   = "development"
-	BuildHash = "development"
+	Version           = "development"
+	BuildHash         = "development"
+	DefaultConfigFile = ".nt-folly-xmaxx-comp"
 )

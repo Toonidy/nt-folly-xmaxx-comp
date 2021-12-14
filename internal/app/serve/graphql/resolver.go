@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"nt-folly-xmaxx-comp/internal/app/serve/graphql/gqlmodels"
+	"nt-folly-xmaxx-comp/internal/pkg/utils"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"go.uber.org/zap"
@@ -13,6 +14,24 @@ import (
 type Resolver struct {
 	Conn *pgxpool.Pool
 	Log  *zap.Logger
+}
+
+// getTimeRangeRounded will round of the dates between the nearest X:X1 minute.
+func getTimeRangeRounded(timeRange *gqlmodels.TimeRangeInput) (*gqlmodels.TimeRangeInput, error) {
+	if timeRange == nil {
+		return nil, nil
+	}
+	timeFrom := utils.TimeRound(timeRange.TimeFrom)
+	timeTo := utils.TimeRound(timeRange.TimeTo)
+
+	if timeFrom.After(timeTo) || timeFrom.Equal(timeTo) {
+		return nil, fmt.Errorf("time range from value is invalid")
+	}
+	output := &gqlmodels.TimeRangeInput{
+		TimeFrom: timeFrom,
+		TimeTo:   timeTo,
+	}
+	return output, nil
 }
 
 /////////////
@@ -27,7 +46,7 @@ func (r *Resolver) Query() QueryResolver {
 }
 
 // Users is a query resolver that fetches all playing users.
-func (r *queryResolver) Users(ctx context.Context) ([]*gqlmodels.User, error) {
+func (r *queryResolver) Users(ctx context.Context, timeRange *gqlmodels.TimeRangeInput) ([]*gqlmodels.User, error) {
 	output := []*gqlmodels.User{}
 	q := `
 		SELECT id, username, display_name, membership_type, status, created_at, updated_at
