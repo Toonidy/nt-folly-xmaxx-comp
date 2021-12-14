@@ -1,4 +1,4 @@
-package serve
+package cli
 
 import (
 	"errors"

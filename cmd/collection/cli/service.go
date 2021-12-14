@@ -1,4 +1,4 @@
-package collection
+package cli
 
 import (
 	"nt-folly-xmaxx-comp/cli/cmd"

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"nt-folly-xmaxx-comp/cli/collection"
+	"nt-folly-xmaxx-comp/cmd/collection/cli"
 )
 
 func main() {
-	collection.Execute()
+	cli.Execute()
 }

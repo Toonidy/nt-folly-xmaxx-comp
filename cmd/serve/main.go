@@ -1,7 +1,7 @@
 package main
 
-import "nt-folly-xmaxx-comp/cli/serve"
+import "nt-folly-xmaxx-comp/cmd/serve/cli"
 
 func main() {
-	serve.Execute()
+	cli.Execute()
 }
