@@ -18,6 +18,7 @@ type Resolver struct {
 /////////////
 //  Query  //
 /////////////
+
 type queryResolver struct{ *Resolver }
 
 // Query points query func from graphql_schema_gen.go
@@ -52,5 +53,11 @@ func (r *queryResolver) Users(ctx context.Context) ([]*gqlmodels.User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to collect users: %w", err)
 	}
+	return output, nil
+}
+
+// Competitions is a query resolver that fetches all available competitions.
+func (r *queryResolver) Competitions(ctx context.Context, timeRange *gqlmodels.TimeRangeInput) ([]*gqlmodels.Competition, error) {
+	output := []*gqlmodels.Competition{}
 	return output, nil
 }

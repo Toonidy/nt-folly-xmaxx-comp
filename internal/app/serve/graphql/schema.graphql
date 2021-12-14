@@ -1,14 +1,26 @@
 scalar Time
 
-enum Status {
+enum UserStatus {
 	NEW
 	ACTIVE
 	DISQUALIFIED
 }
 
+enum CompetitionStatus {
+	DRAFT
+	STARTED
+	FINISHED
+	FAILED
+}
+
 enum MembershipType {
 	BASIC
 	GOLD
+}
+
+input TimeRangeInput {
+	timeFrom: Time!
+	timeTo: Time!
 }
 
 type User {
@@ -17,11 +29,29 @@ type User {
 	displayName: String!
 	membershipType: MembershipType!
 	totalPoints: Int!
-	status: Status!
+	status: UserStatus!
 	createdAt: Time!
 	updatedAt: Time!
 }
 
+type Competition {
+	id: ID!
+	status: CompetitionStatus!
+	multiplier: Int!
+	grindRewards: [CompetitionPrize!]!
+	pointRewards: [CompetitionPrize!]!
+	speedRewards: [CompetitionPrize!]!
+	accuracyRewards: [CompetitionPrize!]!
+	startAt: Time!
+	finishAt: Time!
+}
+
+type CompetitionPrize {
+	rank: Int!
+	points: Int!
+}
+
 type Query {
 	users: [User!]!
+	competitions(timeRange: TimeRangeInput): [Competition!]!
 }

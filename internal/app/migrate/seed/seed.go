@@ -28,8 +28,8 @@ func SetupCompetition(ctx context.Context, conn *pgxpool.Pool, timeFrom time.Tim
 		return ErrAlreadySeeded
 	}
 
-	timeFrom = time.Date(timeFrom.Year(), timeFrom.Month(), timeFrom.Day(), timeFrom.Hour(), int(math.Round(float64(timeFrom.Minute())/10)*10)+1, 0, 0, timeFrom.Location())
-	timeTo = time.Date(timeTo.Year(), timeTo.Month(), timeTo.Day(), timeTo.Hour(), int(math.Round(float64(timeTo.Minute())/10)*10)+1, 0, 0, timeTo.Location())
+	timeFrom = time.Date(timeFrom.Year(), timeFrom.Month(), timeFrom.Day(), timeFrom.Hour(), int(math.Floor(float64(timeFrom.Minute())/10)*10)+1, 0, 0, timeFrom.Location())
+	timeTo = time.Date(timeTo.Year(), timeTo.Month(), timeTo.Day(), timeTo.Hour(), int(math.Floor(float64(timeTo.Minute())/10)*10)+1, 0, 0, timeTo.Location())
 
 	batch := &pgx.Batch{}
 	for {

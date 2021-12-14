@@ -9,15 +9,82 @@ import (
 	"time"
 )
 
+type Competition struct {
+	ID              string              `json:"id"`
+	Status          CompetitionStatus   `json:"status"`
+	Multiplier      int                 `json:"multiplier"`
+	GrindRewards    []*CompetitionPrize `json:"grindRewards"`
+	PointRewards    []*CompetitionPrize `json:"pointRewards"`
+	SpeedRewards    []*CompetitionPrize `json:"speedRewards"`
+	AccuracyRewards []*CompetitionPrize `json:"accuracyRewards"`
+	StartAt         time.Time           `json:"startAt"`
+	FinishAt        time.Time           `json:"finishAt"`
+}
+
+type CompetitionPrize struct {
+	Rank   int `json:"rank"`
+	Points int `json:"points"`
+}
+
+type TimeRangeInput struct {
+	TimeFrom time.Time `json:"timeFrom"`
+	TimeTo   time.Time `json:"timeTo"`
+}
+
 type User struct {
 	ID             string         `json:"id"`
 	Username       string         `json:"username"`
 	DisplayName    string         `json:"displayName"`
 	MembershipType MembershipType `json:"membershipType"`
 	TotalPoints    int            `json:"totalPoints"`
-	Status         Status         `json:"status"`
+	Status         UserStatus     `json:"status"`
 	CreatedAt      time.Time      `json:"createdAt"`
 	UpdatedAt      time.Time      `json:"updatedAt"`
+}
+
+type CompetitionStatus string
+
+const (
+	CompetitionStatusDraft    CompetitionStatus = "DRAFT"
+	CompetitionStatusStarted  CompetitionStatus = "STARTED"
+	CompetitionStatusFinished CompetitionStatus = "FINISHED"
+	CompetitionStatusFailed   CompetitionStatus = "FAILED"
+)
+
+var AllCompetitionStatus = []CompetitionStatus{
+	CompetitionStatusDraft,
+	CompetitionStatusStarted,
+	CompetitionStatusFinished,
+	CompetitionStatusFailed,
+}
+
+func (e CompetitionStatus) IsValid() bool {
+	switch e {
+	case CompetitionStatusDraft, CompetitionStatusStarted, CompetitionStatusFinished, CompetitionStatusFailed:
+		return true
+	}
+	return false
+}
+
+func (e CompetitionStatus) String() string {
+	return string(e)
+}
+
+func (e *CompetitionStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CompetitionStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CompetitionStatus", str)
+	}
+	return nil
+}
+
+func (e CompetitionStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type MembershipType string
@@ -61,45 +128,45 @@ func (e MembershipType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type Status string
+type UserStatus string
 
 const (
-	StatusNew          Status = "NEW"
-	StatusActive       Status = "ACTIVE"
-	StatusDisqualified Status = "DISQUALIFIED"
+	UserStatusNew          UserStatus = "NEW"
+	UserStatusActive       UserStatus = "ACTIVE"
+	UserStatusDisqualified UserStatus = "DISQUALIFIED"
 )
 
-var AllStatus = []Status{
-	StatusNew,
-	StatusActive,
-	StatusDisqualified,
+var AllUserStatus = []UserStatus{
+	UserStatusNew,
+	UserStatusActive,
+	UserStatusDisqualified,
 }
 
-func (e Status) IsValid() bool {
+func (e UserStatus) IsValid() bool {
 	switch e {
-	case StatusNew, StatusActive, StatusDisqualified:
+	case UserStatusNew, UserStatusActive, UserStatusDisqualified:
 		return true
 	}
 	return false
 }
 
-func (e Status) String() string {
+func (e UserStatus) String() string {
 	return string(e)
 }
 
-func (e *Status) UnmarshalGQL(v interface{}) error {
+func (e *UserStatus) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = Status(str)
+	*e = UserStatus(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Status", str)
+		return fmt.Errorf("%s is not a valid UserStatus", str)
 	}
 	return nil
 }
 
-func (e Status) MarshalGQL(w io.Writer) {
+func (e UserStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
