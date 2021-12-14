@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"nt-folly-xmaxx-comp/cli/cmd"
 	"nt-folly-xmaxx-comp/internal/app/collection/cron"
 	"nt-folly-xmaxx-comp/internal/pkg/db"
 	"nt-folly-xmaxx-comp/pkg/nitrotype/clients"
@@ -53,5 +52,4 @@ var serviceCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(serviceCmd)
-	rootCmd.AddCommand(cmd.VersionCmd)
 }
