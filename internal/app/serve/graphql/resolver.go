@@ -3,10 +3,14 @@ package graphql
 import (
 	"context"
 	"fmt"
+	"nt-folly-xmaxx-comp/internal/app/serve/dataloaders"
 	"nt-folly-xmaxx-comp/internal/app/serve/graphql/gqlmodels"
 	"nt-folly-xmaxx-comp/internal/pkg/utils"
+	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/zap"
 )
 
@@ -34,25 +38,65 @@ func getTimeRangeRounded(timeRange *gqlmodels.TimeRangeInput) (*gqlmodels.TimeRa
 	return output, nil
 }
 
+////////////
+//  User  //
+////////////
+
+type userResolver struct{ *Resolver }
+
+func (r *Resolver) User() UserResolver {
+	return &userResolver{r}
+}
+
+func (r *userResolver) TotalPoints(ctx context.Context, obj *gqlmodels.User) (int, error) {
+	pointLoader := dataloaders.GetLoadersFromContext(ctx).UserTotalPointsByID
+	output, err := pointLoader.Load(obj.ID)
+	if err != nil {
+		return 0, fmt.Errorf("totalPoints dataloader failed: %w", err)
+	}
+	return output, nil
+}
+
 /////////////
 //  Query  //
 /////////////
 
 type queryResolver struct{ *Resolver }
 
-// Query points query func from graphql_schema_gen.go
 func (r *Resolver) Query() QueryResolver {
 	return &queryResolver{r}
 }
 
 // Users is a query resolver that fetches all playing users.
 func (r *queryResolver) Users(ctx context.Context, timeRange *gqlmodels.TimeRangeInput) ([]*gqlmodels.User, error) {
+	timeRange, err := getTimeRangeRounded(timeRange)
+	if err != nil {
+		return nil, &gqlerror.Error{
+			Path:    graphql.GetPath(ctx),
+			Message: "Invalid time range received",
+			Extensions: map[string]interface{}{
+				"code": "INVALID_TIMERANGE",
+			},
+		}
+	}
 	output := []*gqlmodels.User{}
+	args := []interface{}{}
 	q := `
-		SELECT id, username, display_name, membership_type, status, created_at, updated_at
-		FROM users
-		WHERE deleted_at IS NULL`
-	rows, err := r.Conn.Query(ctx, q)
+		SELECT u.id, u.username, u.display_name, u.membership_type, u.status, u.created_at, u.updated_at
+		FROM users u
+		WHERE u.deleted_at IS NULL`
+	if timeRange != nil {
+		q += ` AND EXISTS (
+			SELECT 1
+			FROM user_records _ur
+			WHERE _ur.user_id = u.id
+				AND _ur.created_at BETWEEN $1 AND $2
+			LIMIT 1
+		)`
+		args = append(args, timeRange.TimeFrom, timeRange.TimeTo.Add(5*time.Minute))
+	}
+
+	rows, err := r.Conn.Query(ctx, q, args...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to query users: %w", err)
 	}

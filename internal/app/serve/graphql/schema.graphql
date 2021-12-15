@@ -42,8 +42,20 @@ type Competition {
 	pointRewards: [CompetitionPrize!]!
 	speedRewards: [CompetitionPrize!]!
 	accuracyRewards: [CompetitionPrize!]!
+	leaderboard: [CompetitionUser!]!
 	startAt: Time!
 	finishAt: Time!
+}
+
+type CompetitionUser {
+	id: ID!
+	user: User!
+	grindScore: Int!
+	grindRank: Int!
+	speedScore: Float!
+	speedRank: Float!
+	accuracyScore: Float!
+	accuracyRank: Float!
 }
 
 type CompetitionPrize {

@@ -9,3 +9,8 @@ resolver:
   filename: ./internal/app/serve/graphql/resolver.go
   type: Resolver
 autobind: []
+models:
+  User:
+    fields:
+      totalPoints:
+        resolver: true

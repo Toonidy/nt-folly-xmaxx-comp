@@ -17,6 +17,7 @@ type Competition struct {
 	PointRewards    []*CompetitionPrize `json:"pointRewards"`
 	SpeedRewards    []*CompetitionPrize `json:"speedRewards"`
 	AccuracyRewards []*CompetitionPrize `json:"accuracyRewards"`
+	Leaderboard     []*CompetitionUser  `json:"leaderboard"`
 	StartAt         time.Time           `json:"startAt"`
 	FinishAt        time.Time           `json:"finishAt"`
 }
@@ -24,6 +25,17 @@ type Competition struct {
 type CompetitionPrize struct {
 	Rank   int `json:"rank"`
 	Points int `json:"points"`
+}
+
+type CompetitionUser struct {
+	ID            string  `json:"id"`
+	User          *User   `json:"user"`
+	GrindScore    int     `json:"grindScore"`
+	GrindRank     int     `json:"grindRank"`
+	SpeedScore    float64 `json:"speedScore"`
+	SpeedRank     float64 `json:"speedRank"`
+	AccuracyScore float64 `json:"accuracyScore"`
+	AccuracyRank  float64 `json:"accuracyRank"`
 }
 
 type TimeRangeInput struct {

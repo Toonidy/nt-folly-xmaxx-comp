@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/doug-martin/goqu/v9"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/spf13/viper"
 )
+
+var QueryBuilder = goqu.Dialect("postgres")
 
 // GetConnectionString grabs the db connection string from Viper Config settings
 func GetConnectionString() string {
