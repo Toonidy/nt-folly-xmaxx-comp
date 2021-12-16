@@ -100,14 +100,12 @@ func competitionLeaderboardLoader(conn *pgxpool.Pool) *CompetitionLeaderboardLoa
 						goqu.L("u.created_at"),
 						goqu.L("u.updated_at"),
 					).
-					From(goqu.L("competition_results r")).
+					From(goqu.T("competition_results").As("r")).
 					InnerJoin(
 						goqu.L("users u"),
 						goqu.On(goqu.L("u.id = r.user_id")),
 					).
-					Where(goqu.Ex{
-						"competition_id": ids,
-					}).
+					Where(goqu.L("r.competition_id").In(ids)).
 					ToSQL()
 				if err != nil {
 					return nil, []error{fmt.Errorf("failed to build competition leaderboard: %w", err)}

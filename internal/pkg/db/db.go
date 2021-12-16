@@ -36,8 +36,9 @@ func ConnectPool(ctx context.Context, connString string, log *zap.Logger) (*pgxp
 	if err != nil {
 		return nil, fmt.Errorf("could not parse db config: %w", err)
 	}
-	poolConfig.ConnConfig.Logger = zapadapter.NewLogger(log)
-
+	if viper.GetBool("db_debug") {
+		poolConfig.ConnConfig.Logger = zapadapter.NewLogger(log)
+	}
 	conn, err := pgxpool.ConnectConfig(ctx, poolConfig)
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to db config: %w", err)

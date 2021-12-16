@@ -37,7 +37,7 @@ func InitConfig(rootCmd *cobra.Command) func() {
 	rootCmd.PersistentFlags().String("db_pass", "dev", "database password")
 	rootCmd.PersistentFlags().String("db_name", "nt-folly-xmaxx-comp", "database name")
 	rootCmd.PersistentFlags().String("db_sslmode", "disable", "database connection ssl mode")
-	rootCmd.PersistentFlags().Int("db_max_open_connections", 0, "max number of connections to make")
+	rootCmd.PersistentFlags().Bool("db_debug", false, "whether to log queries for debugging purposes")
 
 	viper.BindPFlag("prod", rootCmd.PersistentFlags().Lookup("prod"))
 	viper.BindPFlag("db_url", rootCmd.PersistentFlags().Lookup("db_url"))
@@ -47,7 +47,7 @@ func InitConfig(rootCmd *cobra.Command) func() {
 	viper.BindPFlag("db_pass", rootCmd.PersistentFlags().Lookup("db_pass"))
 	viper.BindPFlag("db_name", rootCmd.PersistentFlags().Lookup("db_name"))
 	viper.BindPFlag("db_sslmode", rootCmd.PersistentFlags().Lookup("db_sslmode"))
-	viper.BindPFlag("db_max_open_connections", rootCmd.PersistentFlags().Lookup("db_max_open_connections"))
+	viper.BindPFlag("db_debug", rootCmd.PersistentFlags().Lookup("db_sslmode"))
 
 	return func() {
 		if cfgFile != "" {
