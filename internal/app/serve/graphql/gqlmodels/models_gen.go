@@ -20,6 +20,7 @@ type Competition struct {
 	Leaderboard     []*CompetitionUser  `json:"leaderboard"`
 	StartAt         time.Time           `json:"startAt"`
 	FinishAt        time.Time           `json:"finishAt"`
+	UpdatedAt       time.Time           `json:"updatedAt"`
 }
 
 type CompetitionPrize struct {

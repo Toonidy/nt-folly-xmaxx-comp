@@ -80,6 +80,12 @@ CREATE TABLE competitions (
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX competitions_time_range_idx ON competitions (
+	from_at,
+	to_at,
+	from_at ASC NULLS FIRST
+);
+
 CREATE MATERIALIZED VIEW competition_results AS
 SELECT r.competition_id,
 	r.user_id,

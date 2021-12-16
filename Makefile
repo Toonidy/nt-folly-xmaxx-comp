@@ -54,7 +54,6 @@ db-reset: db-migrate-drop db-migrate-up
 
 .PHONY: gql
 gql:
-	go get github.com/99designs/gqlgen
 	go run github.com/99designs/gqlgen generate
 
 .PHONY: collection

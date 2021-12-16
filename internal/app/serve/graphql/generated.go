@@ -55,6 +55,7 @@ type ComplexityRoot struct {
 		SpeedRewards    func(childComplexity int) int
 		StartAt         func(childComplexity int) int
 		Status          func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
 	}
 
 	CompetitionPrize struct {
@@ -75,7 +76,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Competitions func(childComplexity int, timeRange *gqlmodels.TimeRangeInput) int
-		Users        func(childComplexity int, timeRange *gqlmodels.TimeRangeInput) int
+		Users        func(childComplexity int) int
 	}
 
 	User struct {
@@ -91,7 +92,7 @@ type ComplexityRoot struct {
 }
 
 type QueryResolver interface {
-	Users(ctx context.Context, timeRange *gqlmodels.TimeRangeInput) ([]*gqlmodels.User, error)
+	Users(ctx context.Context) ([]*gqlmodels.User, error)
 	Competitions(ctx context.Context, timeRange *gqlmodels.TimeRangeInput) ([]*gqlmodels.Competition, error)
 }
 type UserResolver interface {
@@ -183,6 +184,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Competition.Status(childComplexity), true
 
+	case "Competition.updatedAt":
+		if e.complexity.Competition.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.Competition.UpdatedAt(childComplexity), true
+
 	case "CompetitionPrize.points":
 		if e.complexity.CompetitionPrize.Points == nil {
 			break
@@ -270,12 +278,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		args, err := ec.field_Query_users_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.Users(childComplexity, args["timeRange"].(*gqlmodels.TimeRangeInput)), true
+		return e.complexity.Query.Users(childComplexity), true
 
 	case "User.createdAt":
 		if e.complexity.User.CreatedAt == nil {
@@ -430,6 +433,7 @@ type Competition {
 	leaderboard: [CompetitionUser!]!
 	startAt: Time!
 	finishAt: Time!
+	updatedAt: Time!
 }
 
 type CompetitionUser {
@@ -449,7 +453,7 @@ type CompetitionPrize {
 }
 
 type Query {
-	users(timeRange: TimeRangeInput): [User!]!
+	users: [User!]!
 	competitions(timeRange: TimeRangeInput): [Competition!]!
 }
 `, BuiltIn: false},
@@ -476,21 +480,6 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 }
 
 func (ec *executionContext) field_Query_competitions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 *gqlmodels.TimeRangeInput
-	if tmp, ok := rawArgs["timeRange"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timeRange"))
-		arg0, err = ec.unmarshalOTimeRangeInput2ᚖntᚑfollyᚑxmaxxᚑcompᚋinternalᚋappᚋserveᚋgraphqlᚋgqlmodelsᚐTimeRangeInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["timeRange"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_users_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *gqlmodels.TimeRangeInput
@@ -893,6 +882,41 @@ func (ec *executionContext) _Competition_finishAt(ctx context.Context, field gra
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Competition_updatedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodels.Competition) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Competition",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _CompetitionPrize_rank(ctx context.Context, field graphql.CollectedField, obj *gqlmodels.CompetitionPrize) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1259,16 +1283,9 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_users_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Users(rctx, args["timeRange"].(*gqlmodels.TimeRangeInput))
+		return ec.resolvers.Query().Users(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2897,6 +2914,11 @@ func (ec *executionContext) _Competition(ctx context.Context, sel ast.SelectionS
 			}
 		case "finishAt":
 			out.Values[i] = ec._Competition_finishAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._Competition_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

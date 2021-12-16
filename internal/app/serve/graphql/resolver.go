@@ -6,7 +6,6 @@ import (
 	"nt-folly-xmaxx-comp/internal/app/serve/dataloaders"
 	"nt-folly-xmaxx-comp/internal/app/serve/graphql/gqlmodels"
 	"nt-folly-xmaxx-comp/internal/pkg/utils"
-	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -68,35 +67,13 @@ func (r *Resolver) Query() QueryResolver {
 }
 
 // Users is a query resolver that fetches all playing users.
-func (r *queryResolver) Users(ctx context.Context, timeRange *gqlmodels.TimeRangeInput) ([]*gqlmodels.User, error) {
-	timeRange, err := getTimeRangeRounded(timeRange)
-	if err != nil {
-		return nil, &gqlerror.Error{
-			Path:    graphql.GetPath(ctx),
-			Message: "Invalid time range received",
-			Extensions: map[string]interface{}{
-				"code": "INVALID_TIMERANGE",
-			},
-		}
-	}
+func (r *queryResolver) Users(ctx context.Context) ([]*gqlmodels.User, error) {
 	output := []*gqlmodels.User{}
-	args := []interface{}{}
 	q := `
 		SELECT u.id, u.username, u.display_name, u.membership_type, u.status, u.created_at, u.updated_at
 		FROM users u
 		WHERE u.deleted_at IS NULL`
-	if timeRange != nil {
-		q += ` AND EXISTS (
-			SELECT 1
-			FROM user_records _ur
-			WHERE _ur.user_id = u.id
-				AND _ur.created_at BETWEEN $1 AND $2
-			LIMIT 1
-		)`
-		args = append(args, timeRange.TimeFrom, timeRange.TimeTo.Add(5*time.Minute))
-	}
-
-	rows, err := r.Conn.Query(ctx, q, args...)
+	rows, err := r.Conn.Query(ctx, q)
 	if err != nil {
 		return nil, fmt.Errorf("unable to query users: %w", err)
 	}
@@ -121,6 +98,79 @@ func (r *queryResolver) Users(ctx context.Context, timeRange *gqlmodels.TimeRang
 
 // Competitions is a query resolver that fetches all available competitions.
 func (r *queryResolver) Competitions(ctx context.Context, timeRange *gqlmodels.TimeRangeInput) ([]*gqlmodels.Competition, error) {
+	timeRange, err := getTimeRangeRounded(timeRange)
+	if err != nil {
+		return nil, &gqlerror.Error{
+			Path:    graphql.GetPath(ctx),
+			Message: "Invalid time range received",
+			Extensions: map[string]interface{}{
+				"code": "INVALID_TIMERANGE",
+			},
+		}
+	}
 	output := []*gqlmodels.Competition{}
+	args := []interface{}{}
+	q := `
+		SELECT c.id, c.status, c.multiplier, c.grind_rewards, c.point_rewards, c.speed_rewards, c.accuracy_rewards, c.from_at, c.to_at, c.updated_at
+		FROM competitions c`
+	if timeRange != nil {
+		q += ` WHERE from_at >= $1 AND to_at <= $2`
+		args = append(args, timeRange.TimeFrom, timeRange.TimeTo)
+	}
+	q += ` ORDER BY c.from_at ASC NULLS FIRST`
+	rows, err := r.Conn.Query(ctx, q, args...)
+	if err != nil {
+		return nil, fmt.Errorf("unable to query competitions: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		row := gqlmodels.Competition{
+			GrindRewards:    []*gqlmodels.CompetitionPrize{},
+			PointRewards:    []*gqlmodels.CompetitionPrize{},
+			SpeedRewards:    []*gqlmodels.CompetitionPrize{},
+			AccuracyRewards: []*gqlmodels.CompetitionPrize{},
+		}
+		grindRewards := []int{}
+		pointRewards := []int{}
+		speedRewards := []int{}
+		accuracyRewards := []int{}
+		err := rows.Scan(&row.ID, &row.Status, &row.Multiplier, &grindRewards, &pointRewards, &speedRewards, &accuracyRewards, &row.StartAt, &row.FinishAt, &row.UpdatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("unable to collect competitions: %w", err)
+		}
+		for i, r := range grindRewards {
+			prizeData := &gqlmodels.CompetitionPrize{
+				Rank:   i + 1,
+				Points: r,
+			}
+			row.GrindRewards = append(row.GrindRewards, prizeData)
+		}
+		for i, r := range pointRewards {
+			prizeData := &gqlmodels.CompetitionPrize{
+				Rank:   i + 1,
+				Points: r,
+			}
+			row.PointRewards = append(row.PointRewards, prizeData)
+		}
+		for i, r := range speedRewards {
+			prizeData := &gqlmodels.CompetitionPrize{
+				Rank:   i + 1,
+				Points: r,
+			}
+			row.SpeedRewards = append(row.SpeedRewards, prizeData)
+		}
+		for i, r := range accuracyRewards {
+			prizeData := &gqlmodels.CompetitionPrize{
+				Rank:   i + 1,
+				Points: r,
+			}
+			row.AccuracyRewards = append(row.AccuracyRewards, prizeData)
+		}
+		output = append(output, &row)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, fmt.Errorf("unable to collect competitions: %w", err)
+	}
 	return output, nil
 }
