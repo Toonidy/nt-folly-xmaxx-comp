@@ -67,6 +67,9 @@ func (r *Resolver) Competition() CompetitionResolver {
 }
 
 func (r *competitionResolver) Leaderboard(ctx context.Context, obj *gqlmodels.Competition) ([]*gqlmodels.CompetitionUser, error) {
+	if obj.Status != gqlmodels.CompetitionStatusFinished {
+		return []*gqlmodels.CompetitionUser{}, nil
+	}
 	leaderboardLoader := dataloaders.GetLoadersFromContext(ctx).CompetitionLeaderboardByID
 	output, err := leaderboardLoader.Load(obj.ID)
 	if err != nil {
