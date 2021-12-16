@@ -23,7 +23,7 @@ var serviceCmd = &cobra.Command{
 	Long:  "Runs the API Server.",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
-		conn, err := db.ConnectPool(ctx, db.GetConnectionString())
+		conn, err := db.ConnectPool(ctx, db.GetConnectionString(), logger)
 		if err != nil {
 			logger.Error("db connection failed", zap.Error(err))
 			return

@@ -83,26 +83,26 @@ func competitionLeaderboardLoader(conn *pgxpool.Pool) *CompetitionLeaderboardLoa
 				// Query leaderboard data
 				q, args, err := db.QueryBuilder.
 					Select(
-						goqu.C("r.competition_id"),
-						goqu.C("r.user_id"),
-						goqu.C("r.grind"),
-						goqu.C("r.grind_rank"),
-						goqu.C("r.accuracy"),
-						goqu.C("r.accuracy_rank"),
-						goqu.C("r.speed"),
-						goqu.C("r.speed_rank"),
-						goqu.C("r.point"),
-						goqu.C("r.point_rank"),
-						goqu.C("u.username"),
-						goqu.C("u.display_name"),
-						goqu.C("u.membership_type"),
-						goqu.C("u.status"),
-						goqu.C("u.created_at"),
-						goqu.C("u.updated_at"),
+						goqu.L("r.competition_id"),
+						goqu.L("r.user_id"),
+						goqu.L("r.grind"),
+						goqu.L("r.grind_rank"),
+						goqu.L("r.accuracy"),
+						goqu.L("r.accuracy_rank"),
+						goqu.L("r.speed"),
+						goqu.L("r.speed_rank"),
+						goqu.L("r.point"),
+						goqu.L("r.point_rank"),
+						goqu.L("u.username"),
+						goqu.L("u.display_name"),
+						goqu.L("u.membership_type"),
+						goqu.L("u.status"),
+						goqu.L("u.created_at"),
+						goqu.L("u.updated_at"),
 					).
-					From("competition_results r").
+					From(goqu.L("competition_results r")).
 					InnerJoin(
-						goqu.T("users u"),
+						goqu.L("users u"),
 						goqu.On(goqu.L("u.id = r.user_id")),
 					).
 					Where(goqu.Ex{
@@ -140,7 +140,7 @@ func competitionLeaderboardLoader(conn *pgxpool.Pool) *CompetitionLeaderboardLoa
 				for _, key := range ids {
 					rows := []*gqlmodels.CompetitionUser{}
 					for _, row := range results {
-						if row.userID == key {
+						if row.competitionID == key {
 							if row.displayName == "" {
 								row.displayName = row.username
 							}

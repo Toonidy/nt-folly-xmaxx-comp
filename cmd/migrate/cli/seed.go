@@ -36,7 +36,7 @@ var dbSeedCompetition = &cobra.Command{
 			return
 		}
 		ctx := cmd.Context()
-		conn, err := db.ConnectPool(ctx, db.GetConnectionString())
+		conn, err := db.ConnectPool(ctx, db.GetConnectionString(), logger)
 		if err != nil {
 			logger.Error("db connection failed", zap.Error(err))
 			return

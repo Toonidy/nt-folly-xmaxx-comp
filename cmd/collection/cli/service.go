@@ -30,7 +30,7 @@ var serviceCmd = &cobra.Command{
 			return
 		}
 
-		conn, err := db.ConnectPool(ctx, db.GetConnectionString())
+		conn, err := db.ConnectPool(ctx, db.GetConnectionString(), logger)
 		if err != nil {
 			logger.Error("unable to connect to database", zap.Error(err))
 			return

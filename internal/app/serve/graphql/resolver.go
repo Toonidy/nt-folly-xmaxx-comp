@@ -67,7 +67,12 @@ func (r *Resolver) Competition() CompetitionResolver {
 }
 
 func (r *competitionResolver) Leaderboard(ctx context.Context, obj *gqlmodels.Competition) ([]*gqlmodels.CompetitionUser, error) {
-	return nil, nil
+	leaderboardLoader := dataloaders.GetLoadersFromContext(ctx).CompetitionLeaderboardByID
+	output, err := leaderboardLoader.Load(obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("leaderboard dataloader failed: %w", err)
+	}
+	return output, nil
 }
 
 /////////////

@@ -6,8 +6,10 @@ import (
 	"net/url"
 
 	"github.com/doug-martin/goqu/v9"
+	"github.com/jackc/pgx/v4/log/zapadapter"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 var QueryBuilder = goqu.Dialect("postgres")
@@ -29,11 +31,13 @@ func GetConnectionString() string {
 }
 
 // ConnectPool connects to a PostgreSQL Database using pgxpool.
-func ConnectPool(ctx context.Context, connString string) (*pgxpool.Pool, error) {
+func ConnectPool(ctx context.Context, connString string, log *zap.Logger) (*pgxpool.Pool, error) {
 	poolConfig, err := pgxpool.ParseConfig(connString)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse db config: %w", err)
 	}
+	poolConfig.ConnConfig.Logger = zapadapter.NewLogger(log)
+
 	conn, err := pgxpool.ConnectConfig(ctx, poolConfig)
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to db config: %w", err)
