@@ -12,7 +12,6 @@ import (
 	gqlgraphql "github.com/99designs/gqlgen/graphql"
 
 	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
@@ -46,7 +45,7 @@ func NewAPIService(conn *pgxpool.Pool, log *zap.Logger, corsOptions *cors.Option
 			},
 		),
 	)
-	gqlServer.Use(extension.FixedComplexityLimit(181))
+	// gqlServer.Use(extension.FixedComplexityLimit(181))
 	gqlServer.SetErrorPresenter(
 		func(ctx context.Context, e error) *gqlerror.Error {
 			if gqlErr, ok := e.(*gqlerror.Error); ok {
