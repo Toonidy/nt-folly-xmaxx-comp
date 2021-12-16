@@ -120,6 +120,7 @@ FROM (
 		) AS point
 	FROM competitions c 
 		INNER JOIN user_records ur ON ur.request_id = c.request_id 
+		INNER JOIN users u ON u.id = ur.user_id AND u.status != 'DISQUALIFIED'
 ) r
 WINDOW g as (PARTITION BY r.competition_id ORDER BY r.grind DESC),
 	a AS (PARTITION BY r.competition_id ORDER BY r.accuracy DESC, r.grind DESC),

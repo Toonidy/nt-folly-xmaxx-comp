@@ -34,9 +34,11 @@ type CompetitionUser struct {
 	GrindScore    int     `json:"grindScore"`
 	GrindRank     int     `json:"grindRank"`
 	SpeedScore    float64 `json:"speedScore"`
-	SpeedRank     float64 `json:"speedRank"`
+	SpeedRank     int     `json:"speedRank"`
 	AccuracyScore float64 `json:"accuracyScore"`
-	AccuracyRank  float64 `json:"accuracyRank"`
+	AccuracyRank  int     `json:"accuracyRank"`
+	PointScore    int     `json:"pointScore"`
+	PointRank     int     `json:"pointRank"`
 }
 
 type TimeRangeInput struct {

@@ -56,6 +56,20 @@ func (r *userResolver) TotalPoints(ctx context.Context, obj *gqlmodels.User) (in
 	return output, nil
 }
 
+///////////////////
+//  Competition  //
+///////////////////
+
+type competitionResolver struct{ *Resolver }
+
+func (r *Resolver) Competition() CompetitionResolver {
+	return &competitionResolver{r}
+}
+
+func (r *competitionResolver) Leaderboard(ctx context.Context, obj *gqlmodels.Competition) ([]*gqlmodels.CompetitionUser, error) {
+	return nil, nil
+}
+
 /////////////
 //  Query  //
 /////////////

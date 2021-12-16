@@ -14,3 +14,7 @@ models:
     fields:
       totalPoints:
         resolver: true
+  Competition:
+    fields:
+      leaderboard:
+        resolver: true
