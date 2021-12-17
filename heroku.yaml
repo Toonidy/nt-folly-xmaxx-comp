@@ -1,0 +1,8 @@
+build:
+  docker:
+    web: Dockerfile
+  config:
+    BUILD_VERSION: v0.1.0
+run:
+  web: API_ADDR=":$PORT" PROD=true ./main service
+ 
