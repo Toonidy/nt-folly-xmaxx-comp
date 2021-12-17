@@ -1,5 +1,5 @@
 # Build Go API Server
-FROM golang:1.17-alpine AS go_builder
+FROM golang:1.16-alpine AS go_builder
 RUN go version
 ARG BUILD_VERSION
 ARG SOURCE_VERSION
