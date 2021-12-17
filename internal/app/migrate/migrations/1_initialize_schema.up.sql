@@ -86,10 +86,6 @@ CREATE INDEX competitions_time_range_idx ON competitions (
 	from_at ASC NULLS FIRST
 );
 
-CREATE INDEX competitions_competition_id_idx ON competition_results (
-	competition_id
-);
-
 CREATE MATERIALIZED VIEW competition_results AS
 SELECT r.competition_id,
 	r.user_id,
@@ -132,3 +128,7 @@ WINDOW g as (PARTITION BY r.competition_id ORDER BY r.grind DESC),
 	p AS (PARTITION BY r.competition_id ORDER BY r.point DESC, r.grind DESC);
 
 CREATE UNIQUE INDEX ON competition_results (competition_id, user_id);
+
+CREATE INDEX competitions_competition_id_idx ON competition_results (
+	competition_id
+);
