@@ -60,12 +60,16 @@ func competitionLeaderboardLoader(conn *pgxpool.Pool) *CompetitionLeaderboardLoa
 		userID         string
 		grind          int
 		grindRank      int
+		grindReward    int
 		speed          float64
 		speedRank      int
+		speedReward    int
 		point          int
 		pointRank      int
+		pointReward    int
 		accuracy       float64
 		accuracyRank   int
+		accuracyReward int
 		username       string
 		displayName    string
 		membershipType string
@@ -87,12 +91,16 @@ func competitionLeaderboardLoader(conn *pgxpool.Pool) *CompetitionLeaderboardLoa
 						goqu.L("r.user_id"),
 						goqu.L("r.grind"),
 						goqu.L("r.grind_rank"),
+						goqu.L("r.grind_reward"),
 						goqu.L("r.accuracy"),
 						goqu.L("r.accuracy_rank"),
+						goqu.L("r.accuracy_reward"),
 						goqu.L("r.speed"),
 						goqu.L("r.speed_rank"),
+						goqu.L("r.speed_reward"),
 						goqu.L("r.point"),
 						goqu.L("r.point_rank"),
+						goqu.L("r.point_reward"),
 						goqu.L("u.username"),
 						goqu.L("u.display_name"),
 						goqu.L("u.membership_type"),
@@ -119,9 +127,9 @@ func competitionLeaderboardLoader(conn *pgxpool.Pool) *CompetitionLeaderboardLoa
 				for rows.Next() {
 					var row competitionLeaderboardResult
 					err := rows.Scan(
-						&row.competitionID, &row.userID, &row.grind, &row.grindRank, &row.accuracy,
-						&row.accuracyRank, &row.speed, &row.speedRank, &row.point, &row.pointRank,
-						&row.username, &row.displayName, &row.membershipType, &row.status, &row.createdAt, &row.updatedAt,
+						&row.competitionID, &row.userID, &row.grind, &row.grindRank, &row.grindReward, &row.accuracy,
+						&row.accuracyRank, &row.accuracyReward, &row.speed, &row.speedRank, &row.speedReward, &row.point,
+						&row.pointRank, &row.pointReward, &row.username, &row.displayName, &row.membershipType, &row.status, &row.createdAt, &row.updatedAt,
 					)
 					if err != nil {
 						return nil, []error{fmt.Errorf("failed to scan user total points: %w", err)}
@@ -143,15 +151,19 @@ func competitionLeaderboardLoader(conn *pgxpool.Pool) *CompetitionLeaderboardLoa
 								row.displayName = row.username
 							}
 							rows = append(rows, &gqlmodels.CompetitionUser{
-								ID:            fmt.Sprintf("%s::%s", row.competitionID, row.userID),
-								GrindScore:    row.grind,
-								GrindRank:     row.grindRank,
-								SpeedScore:    row.speed,
-								SpeedRank:     row.speedRank,
-								PointScore:    row.point,
-								PointRank:     row.pointRank,
-								AccuracyScore: row.accuracy,
-								AccuracyRank:  row.accuracyRank,
+								ID:             fmt.Sprintf("%s::%s", row.competitionID, row.userID),
+								GrindScore:     row.grind,
+								GrindRank:      row.grindRank,
+								GrindReward:    row.grindReward,
+								SpeedScore:     row.speed,
+								SpeedRank:      row.speedRank,
+								SpeedReward:    row.speedReward,
+								PointScore:     row.point,
+								PointRank:      row.pointRank,
+								PointReward:    row.pointReward,
+								AccuracyScore:  row.accuracy,
+								AccuracyRank:   row.accuracyRank,
+								AccuracyReward: row.accuracyReward,
 								User: &gqlmodels.User{
 									ID:             row.userID,
 									Username:       row.username,

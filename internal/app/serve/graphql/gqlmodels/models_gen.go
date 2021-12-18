@@ -29,16 +29,20 @@ type CompetitionPrize struct {
 }
 
 type CompetitionUser struct {
-	ID            string  `json:"id"`
-	User          *User   `json:"user"`
-	GrindScore    int     `json:"grindScore"`
-	GrindRank     int     `json:"grindRank"`
-	SpeedScore    float64 `json:"speedScore"`
-	SpeedRank     int     `json:"speedRank"`
-	AccuracyScore float64 `json:"accuracyScore"`
-	AccuracyRank  int     `json:"accuracyRank"`
-	PointScore    int     `json:"pointScore"`
-	PointRank     int     `json:"pointRank"`
+	ID             string  `json:"id"`
+	User           *User   `json:"user"`
+	GrindScore     int     `json:"grindScore"`
+	GrindRank      int     `json:"grindRank"`
+	GrindReward    int     `json:"grindReward"`
+	SpeedScore     float64 `json:"speedScore"`
+	SpeedRank      int     `json:"speedRank"`
+	SpeedReward    int     `json:"speedReward"`
+	AccuracyScore  float64 `json:"accuracyScore"`
+	AccuracyRank   int     `json:"accuracyRank"`
+	AccuracyReward int     `json:"accuracyReward"`
+	PointScore     int     `json:"pointScore"`
+	PointRank      int     `json:"pointRank"`
+	PointReward    int     `json:"pointReward"`
 }
 
 type TimeRangeInput struct {

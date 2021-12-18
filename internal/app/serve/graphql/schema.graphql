@@ -53,12 +53,16 @@ type CompetitionUser {
 	user: User!
 	grindScore: Int!
 	grindRank: Int!
+	grindReward: Int!
 	speedScore: Float!
 	speedRank: Int!
+	speedReward: Int!
 	accuracyScore: Float!
 	accuracyRank: Int!
+	accuracyReward: Int!
 	pointScore: Int!
 	pointRank: Int!
+	pointReward: Int!
 }
 
 type CompetitionPrize {

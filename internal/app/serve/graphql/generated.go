@@ -65,16 +65,20 @@ type ComplexityRoot struct {
 	}
 
 	CompetitionUser struct {
-		AccuracyRank  func(childComplexity int) int
-		AccuracyScore func(childComplexity int) int
-		GrindRank     func(childComplexity int) int
-		GrindScore    func(childComplexity int) int
-		ID            func(childComplexity int) int
-		PointRank     func(childComplexity int) int
-		PointScore    func(childComplexity int) int
-		SpeedRank     func(childComplexity int) int
-		SpeedScore    func(childComplexity int) int
-		User          func(childComplexity int) int
+		AccuracyRank   func(childComplexity int) int
+		AccuracyReward func(childComplexity int) int
+		AccuracyScore  func(childComplexity int) int
+		GrindRank      func(childComplexity int) int
+		GrindReward    func(childComplexity int) int
+		GrindScore     func(childComplexity int) int
+		ID             func(childComplexity int) int
+		PointRank      func(childComplexity int) int
+		PointReward    func(childComplexity int) int
+		PointScore     func(childComplexity int) int
+		SpeedRank      func(childComplexity int) int
+		SpeedReward    func(childComplexity int) int
+		SpeedScore     func(childComplexity int) int
+		User           func(childComplexity int) int
 	}
 
 	Query struct {
@@ -218,6 +222,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CompetitionUser.AccuracyRank(childComplexity), true
 
+	case "CompetitionUser.accuracyReward":
+		if e.complexity.CompetitionUser.AccuracyReward == nil {
+			break
+		}
+
+		return e.complexity.CompetitionUser.AccuracyReward(childComplexity), true
+
 	case "CompetitionUser.accuracyScore":
 		if e.complexity.CompetitionUser.AccuracyScore == nil {
 			break
@@ -231,6 +242,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CompetitionUser.GrindRank(childComplexity), true
+
+	case "CompetitionUser.grindReward":
+		if e.complexity.CompetitionUser.GrindReward == nil {
+			break
+		}
+
+		return e.complexity.CompetitionUser.GrindReward(childComplexity), true
 
 	case "CompetitionUser.grindScore":
 		if e.complexity.CompetitionUser.GrindScore == nil {
@@ -253,6 +271,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CompetitionUser.PointRank(childComplexity), true
 
+	case "CompetitionUser.pointReward":
+		if e.complexity.CompetitionUser.PointReward == nil {
+			break
+		}
+
+		return e.complexity.CompetitionUser.PointReward(childComplexity), true
+
 	case "CompetitionUser.pointScore":
 		if e.complexity.CompetitionUser.PointScore == nil {
 			break
@@ -266,6 +291,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CompetitionUser.SpeedRank(childComplexity), true
+
+	case "CompetitionUser.speedReward":
+		if e.complexity.CompetitionUser.SpeedReward == nil {
+			break
+		}
+
+		return e.complexity.CompetitionUser.SpeedReward(childComplexity), true
 
 	case "CompetitionUser.speedScore":
 		if e.complexity.CompetitionUser.SpeedScore == nil {
@@ -461,12 +493,16 @@ type CompetitionUser {
 	user: User!
 	grindScore: Int!
 	grindRank: Int!
+	grindReward: Int!
 	speedScore: Float!
 	speedRank: Int!
+	speedReward: Int!
 	accuracyScore: Float!
 	accuracyRank: Int!
+	accuracyReward: Int!
 	pointScore: Int!
 	pointRank: Int!
+	pointReward: Int!
 }
 
 type CompetitionPrize {
@@ -1149,6 +1185,41 @@ func (ec *executionContext) _CompetitionUser_grindRank(ctx context.Context, fiel
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _CompetitionUser_grindReward(ctx context.Context, field graphql.CollectedField, obj *gqlmodels.CompetitionUser) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CompetitionUser",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GrindReward, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _CompetitionUser_speedScore(ctx context.Context, field graphql.CollectedField, obj *gqlmodels.CompetitionUser) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1203,6 +1274,41 @@ func (ec *executionContext) _CompetitionUser_speedRank(ctx context.Context, fiel
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.SpeedRank, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CompetitionUser_speedReward(ctx context.Context, field graphql.CollectedField, obj *gqlmodels.CompetitionUser) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CompetitionUser",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SpeedReward, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1289,6 +1395,41 @@ func (ec *executionContext) _CompetitionUser_accuracyRank(ctx context.Context, f
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _CompetitionUser_accuracyReward(ctx context.Context, field graphql.CollectedField, obj *gqlmodels.CompetitionUser) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CompetitionUser",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccuracyReward, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _CompetitionUser_pointScore(ctx context.Context, field graphql.CollectedField, obj *gqlmodels.CompetitionUser) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1343,6 +1484,41 @@ func (ec *executionContext) _CompetitionUser_pointRank(ctx context.Context, fiel
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.PointRank, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CompetitionUser_pointReward(ctx context.Context, field graphql.CollectedField, obj *gqlmodels.CompetitionUser) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CompetitionUser",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PointReward, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3097,6 +3273,11 @@ func (ec *executionContext) _CompetitionUser(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "grindReward":
+			out.Values[i] = ec._CompetitionUser_grindReward(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "speedScore":
 			out.Values[i] = ec._CompetitionUser_speedScore(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -3104,6 +3285,11 @@ func (ec *executionContext) _CompetitionUser(ctx context.Context, sel ast.Select
 			}
 		case "speedRank":
 			out.Values[i] = ec._CompetitionUser_speedRank(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "speedReward":
+			out.Values[i] = ec._CompetitionUser_speedReward(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -3117,6 +3303,11 @@ func (ec *executionContext) _CompetitionUser(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "accuracyReward":
+			out.Values[i] = ec._CompetitionUser_accuracyReward(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pointScore":
 			out.Values[i] = ec._CompetitionUser_pointScore(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -3124,6 +3315,11 @@ func (ec *executionContext) _CompetitionUser(ctx context.Context, sel ast.Select
 			}
 		case "pointRank":
 			out.Values[i] = ec._CompetitionUser_pointRank(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "pointReward":
+			out.Values[i] = ec._CompetitionUser_pointReward(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
