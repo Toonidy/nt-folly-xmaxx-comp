@@ -239,12 +239,14 @@ func userTotalPointLoader(conn *pgxpool.Pool) *UserTotalPointsLoader {
 				// Generate output
 				output := []int{}
 				for _, key := range ids {
+					points := 0
 					for _, row := range results {
 						if row.userID == key {
-							output = append(output, row.points)
+							points = row.points
 							break
 						}
 					}
+					output = append(output, points)
 				}
 				return output, nil
 			},
