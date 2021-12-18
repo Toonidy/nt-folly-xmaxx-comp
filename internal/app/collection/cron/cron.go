@@ -291,7 +291,7 @@ func syncTeams(ctx context.Context, conn *pgxpool.Pool, log *zap.Logger, apiClie
 						AND r2.api_team_log_id != r1.api_team_log_id
 					INNER JOIN nt_api_team_logs l1 ON l1.id = r1.api_team_log_id AND json_typeof(l1.log_data->'data'->'members') = 'array'
 					INNER JOIN nt_api_team_logs l2 ON l2.id = r2.api_team_log_id AND json_typeof(l2.log_data->'data'->'members') = 'array'
-					INNER JOIN json_array_elements(l1.log_data->'data'->'members') AS m1 ON m1->>'userID' IS NOT NULL AND (m->>'userID')::INT NOT IN (31927399)
+					INNER JOIN json_array_elements(l1.log_data->'data'->'members') AS m1 ON m1->>'userID' IS NOT NULL AND (m1->>'userID')::int NOT IN (31927399)
 					INNER JOIN json_array_elements(l2.log_data->'data'->'members') AS m2 ON (m1->>'userID')::int = (m2->>'userID')::int
 				WHERE r1.id = $1
 					AND r1.prev_id IS NOT NULL
