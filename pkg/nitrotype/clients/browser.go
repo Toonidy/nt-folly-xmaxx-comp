@@ -39,7 +39,7 @@ func (c *APIClientBrowser) getRequest(url string, timeout int) ([]byte, error) {
 	)
 	defer cancel()
 
-	ctx, cancel = context.WithTimeout(ctx, 15*time.Second)
+	ctx, cancel = context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
 	defer cancel()
 
 	var requestID network.RequestID
